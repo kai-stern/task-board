@@ -1,0 +1,12 @@
+{
+  "name": "task-board",
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "installCommand": null,
+  "devCommand": null,
+  "github": {
+    "enabled": true,
+    "autoAlias": true
+  }
+}
