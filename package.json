@@ -1,0 +1,9 @@
+{
+  "name": "task-board",
+  "version": "1.0.0",
+  "description": "Kai & Omer Task Board",
+  "scripts": {
+    "deploy": "npx vercel --prod",
+    "dev": "npx vercel"
+  }
+}

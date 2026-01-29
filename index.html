@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Task Board - Kai & Omer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #172b4d;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #1a1a2e;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0079bf, #5aac44);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .header-stat {
+            text-align: center;
+            padding: 8px 16px;
+            background: #f4f5f7;
+            border-radius: 8px;
+        }
+        
+        .header-stat-value {
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        
+        .header-stat-label {
+            font-size: 0.75em;
+            color: #5e6c84;
+        }
+        
+        .board-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+        
+        .board {
+            display: flex;
+            gap: 20px;
+            min-width: fit-content;
+        }
+        
+        .column {
+            background: #ebecf0;
+            border-radius: 12px;
+            width: 300px;
+            min-width: 300px;
+            max-height: calc(100vh - 150px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .column-header {
+            padding: 14px 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .column.todo .column-header { border-bottom-color: #f2a900; }
+        .column.in-progress .column-header { border-bottom-color: #0079bf; }
+        .column.blocked .column-header { border-bottom-color: #eb5a46; }
+        .column.done .column-header { border-bottom-color: #61bd4f; }
+        
+        .column-title {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .column-count {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+        
+        .cards-container {
+            padding: 0 8px 8px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 100px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        
+        .card:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .card.priority-high { border-left-color: #eb5a46; }
+        .card.priority-medium { border-left-color: #f2a900; }
+        .card.priority-low { border-left-color: #61bd4f; }
+        
+        .card-labels {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .label {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        
+        .label-urgent { background: #eb5a46; color: white; }
+        .label-medium { background: #f2a900; color: white; }
+        .label-easy { background: #61bd4f; color: white; }
+        .label-kai { background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white; }
+        
+        .card-title {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #172b4d;
+        }
+        
+        .card-desc {
+            font-size: 0.85em;
+            color: #5e6c84;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75em;
+            color: #5e6c84;
+        }
+        
+        .card-badges {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .add-card-btn {
+            width: calc(100% - 16px);
+            margin: 0 8px 8px;
+            padding: 10px;
+            background: transparent;
+            border: 2px dashed #c1c7d0;
+            border-radius: 8px;
+            color: #5e6c84;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .add-card-btn:hover {
+            background: rgba(0,0,0,0.05);
+            border-color: #0079bf;
+            color: #0079bf;
+        }
+        
+        .add-card-form {
+            padding: 8px;
+            display: none;
+        }
+        
+        .add-card-form.active {
+            display: block;
+        }
+        
+        .add-card-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #0079bf;
+            border-radius: 6px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+            margin-bottom: 8px;
+        }
+        
+        .add-card-form input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #dfe1e6;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .add-card-form select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #dfe1e6;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: white;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #0079bf;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #026aa7;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #5e6c84;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: #f4f5f7;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #dfe1e6;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .modal-header-icon {
+            width: 32px;
+            height: 32px;
+            background: #ebecf0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+        
+        .modal-header-content {
+            flex: 1;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.3em;
+            margin-bottom: 4px;
+        }
+        
+        .modal-header span {
+            font-size: 0.85em;
+            color: #5e6c84;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #5e6c84;
+            padding: 5px;
+        }
+        
+        .modal-body {
+            padding: 20px 24px;
+        }
+        
+        .modal-section {
+            margin-bottom: 24px;
+        }
+        
+        .modal-section-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #5e6c84;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        
+        .ai-note-box {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.1));
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        
+        .ai-note-box h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #7c3aed;
+        }
+        
+        .ai-note-box textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 8px;
+            background: white;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .ai-note-box textarea:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .status-btn {
+            padding: 10px 16px;
+            background: white;
+            border: 2px solid #dfe1e6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-btn:hover {
+            border-color: #0079bf;
+            background: #ebf5fc;
+        }
+        
+        .status-btn.active {
+            border-color: #0079bf;
+            background: #e6f2ff;
+        }
+        
+        .delete-btn {
+            margin-right: auto;
+            background: #eb5a46;
+            color: white;
+            border: none;
+        }
+        
+        .delete-btn:hover {
+            background: #d0453a;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .header-stats {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .board-container {
+                padding: 15px;
+            }
+            
+            .column {
+                width: 280px;
+                min-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">📋</div>
+            <span>Task Board | Kai & Omer</span>
+        </div>
+        <div class="header-stats">
+            <div class="header-stat">
+                <div class="header-stat-value" id="totalTasks">0</div>
+                <div class="header-stat-label">סה"כ</div>
+            </div>
+            <div class="header-stat">
+                <div class="header-stat-value" id="inProgressTasks">0</div>
+                <div class="header-stat-label">בתהליך</div>
+            </div>
+            <div class="header-stat">
+                <div class="header-stat-value" id="blockedTasks" style="color: #eb5a46;">0</div>
+                <div class="header-stat-label">תקועים</div>
+            </div>
+            <div class="header-stat">
+                <div class="header-stat-value" id="doneTasks" style="color: #61bd4f;">0</div>
+                <div class="header-stat-label">הושלמו</div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="board-container">
+        <div class="board">
+            <!-- TODO Column -->
+            <div class="column todo">
+                <div class="column-header">
+                    <span class="column-title">📋 לעשות</span>
+                    <span class="column-count" id="todoCount">0</span>
+                </div>
+                <div class="cards-container" id="todoCards"></div>
+                <button class="add-card-btn" onclick="showAddForm('todo')">+ הוסף משימה</button>
+                <div class="add-card-form" id="todoForm">
+                    <input type="text" id="todoTitle" placeholder="כותרת המשימה...">
+                    <textarea id="todoDesc" placeholder="תיאור מפורט..."></textarea>
+                    <select id="todoPriority">
+                        <option value="medium">🔴 בינוני</option>
+                        <option value="high">🔴 דחוף</option>
+                        <option value="low">🟢 יכול לחכות</option>
+                    </select>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="addTask('todo')">הוסף</button>
+                        <button class="btn btn-secondary" onclick="hideAddForm('todo')">ביטול</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- IN PROGRESS Column -->
+            <div class="column in-progress">
+                <div class="column-header">
+                    <span class="column-title">🚀 בביצוע</span>
+                    <span class="column-count" id="progressCount">0</span>
+                </div>
+                <div class="cards-container" id="progressCards"></div>
+                <button class="add-card-btn" onclick="showAddForm('in-progress')">+ הוסף משימה</button>
+                <div class="add-card-form" id="progressForm">
+                    <input type="text" id="progressTitle" placeholder="כותרת המשימה...">
+                    <textarea id="progressDesc" placeholder="תיאור מפורט..."></textarea>
+                    <select id="progressPriority">
+                        <option value="medium">🔴 בינוני</option>
+                        <option value="high">🔴 דחוף</option>
+                        <option value="low">🟢 יכול לחכות</option>
+                    </select>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="addTask('in-progress')">הוסף</button>
+                        <button class="btn btn-secondary" onclick="hideAddForm('in-progress')">ביטול</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BLOCKED Column -->
+            <div class="column blocked">
+                <div class="column-header">
+                    <span class="column-title">⚠️ צריך עזרה</span>
+                    <span class="column-count" id="blockedCount">0</span>
+                </div>
+                <div class="cards-container" id="blockedCards"></div>
+                <button class="add-card-btn" onclick="showAddForm('blocked')">+ הוסף משימה</button>
+                <div class="add-card-form" id="blockedForm">
+                    <input type="text" id="blockedTitle" placeholder="כותרת המשימה...">
+                    <textarea id="blockedDesc" placeholder="תיאור מפורט..."></textarea>
+                    <select id="blockedPriority">
+                        <option value="high">🔴 דחוף</option>
+                        <option value="medium">🔴 בינוני</option>
+                        <option value="low">🟢 יכול לחכות</option>
+                    </select>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="addTask('blocked')">הוסף</button>
+                        <button class="btn btn-secondary" onclick="hideAddForm('blocked')">ביטול</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DONE Column -->
+            <div class="column done">
+                <div class="column-header">
+                    <span class="column-title">✅ הושלמו</span>
+                    <span class="column-count" id="doneCount">0</span>
+                </div>
+                <div class="cards-container" id="doneCards"></div>
+                <button class="add-card-btn" onclick="showAddForm('done')">+ הוסף משימה</button>
+                <div class="add-card-form" id="doneForm">
+                    <input type="text" id="doneTitle" placeholder="כותרת המשימה...">
+                    <textarea id="doneDesc" placeholder="תיאור מפורט..."></textarea>
+                    <select id="donePriority">
+                        <option value="low">🟢 יכול לחכות</option>
+                        <option value="medium">🔴 בינוני</option>
+                        <option value="high">🔴 דחוף</option>
+                    </select>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="addTask('done')">הוסף</button>
+                        <button class="btn btn-secondary" onclick="hideAddForm('done')">ביטול</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Task Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-header-icon" id="modalIcon">📋</div>
+                <div class="modal-header-content">
+                    <h2 id="modalTitle">משימה</h2>
+                    <span id="modalStatus">ברשימה: לעשות</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <div class="modal-section-title">תיאור</div>
+                    <p id="modalDesc" style="color: #172b4d; line-height: 1.6;"></p>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">💬 הערה מ-Kai (פה אני כותב מה אני צריך)</div>
+                    <div class="ai-note-box">
+                        <h4>🤖 Kai Stern</h4>
+                        <textarea id="aiNote" placeholder="כתוב כאן מה אתה צריך מ-Omer...&#10;לדוגמה: 'אני לא מצליח להעלות סרטון לטיקטוק, אשמח לעזרה עם ה-API key'"></textarea>
+                        <button class="btn btn-primary" style="margin-top: 10px;" onclick="saveAiNote()">💾 שמור הערה</button>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">הזזת משימה</div>
+                    <div class="modal-actions">
+                        <button class="status-btn" onclick="moveTask('todo')">📋 לעשות</button>
+                        <button class="status-btn" onclick="moveTask('in-progress')">🚀 בביצוע</button>
+                        <button class="status-btn" onclick="moveTask('blocked')">⚠️ צריך עזרה</button>
+                        <button class="status-btn" onclick="moveTask('done')">✅ הושלם</button>
+                        <button class="status-btn delete-btn" onclick="deleteTask()">🗑️ מחק</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('kaiTasks')) || [];
+        let currentTaskId = null;
+
+        function saveTasks() {
+            localStorage.setItem('kaiTasks', JSON.stringify(tasks));
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const columns = {
+                'todo': document.getElementById('todoCards'),
+                'in-progress': document.getElementById('progressCards'),
+                'blocked': document.getElementById('blockedCards'),
+                'done': document.getElementById('doneCards')
+            };
+            
+            const counts = { 'todo': 0, 'in-progress': 0, 'blocked': 0, 'done': 0 };
+            
+            Object.values(columns).forEach(col => col.innerHTML = '');
+            
+            tasks.forEach(task => {
+                if (counts[task.status] !== undefined) {
+                    counts[task.status]++;
+                    const card = createCard(task);
+                    columns[task.status].appendChild(card);
+                }
+            });
+            
+            // Update counts
+            document.getElementById('todoCount').textContent = counts['todo'];
+            document.getElementById('progressCount').textContent = counts['in-progress'];
+            document.getElementById('blockedCount').textContent = counts['blocked'];
+            document.getElementById('doneCount').textContent = counts['done'];
+            
+            // Header stats
+            document.getElementById('totalTasks').textContent = tasks.length;
+            document.getElementById('inProgressTasks').textContent = counts['in-progress'];
+            document.getElementById('blockedTasks').textContent = counts['blocked'];
+            document.getElementById('doneTasks').textContent = counts['done'];
+        }
+
+        function createCard(task) {
+            const card = document.createElement('div');
+            card.className = `card priority-${task.priority}`;
+            card.onclick = () => openTask(task.id);
+            
+            const priorityLabels = {
+                'high': { class: 'label-urgent', text: 'דחוף' },
+                'medium': { class: 'label-medium', text: 'בינוני' },
+                'low': { class: 'label-easy', text: 'יכול לחכות' }
+            };
+            
+            card.innerHTML = `
+                <div class="card-labels">
+                    <span class="label ${priorityLabels[task.priority].class}">${priorityLabels[task.priority].text}</span>
+                    ${task.aiNote ? '<span class="label label-kai">💬 Kai</span>' : ''}
+                </div>
+                <div class="card-title">${task.title}</div>
+                ${task.desc ? `<div class="card-desc">${task.desc}</div>` : ''}
+                <div class="card-meta">
+                    <span>${formatDate(task.created)}</span>
+                    <div class="card-badges">
+                        ${task.aiNote ? '<span class="badge">💬</span>' : ''}
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return 'היום';
+            if (days === 1) return 'אתמול';
+            if (days < 7) return `${days} ימים`;
+            return date.toLocaleDateString('he-IL', { month: 'short', day: 'numeric' });
+        }
+
+        function showAddForm(status) {
+            document.getElementById(`${status}Form`).classList.add('active');
+        }
+
+        function hideAddForm(status) {
+            document.getElementById(`${status}Form`).classList.remove('active');
+            document.getElementById(`${status}Title`).value = '';
+            document.getElementById(`${status}Desc`).value = '';
+        }
+
+        function addTask(status) {
+            const title = document.getElementById(`${status}Title`).value.trim();
+            const desc = document.getElementById(`${status}Desc`).value.trim();
+            const priority = document.getElementById(`${status}Priority`).value;
+            
+            if (!title) return alert('נא להכניס כותרת');
+            
+            const task = {
+                id: Date.now().toString(),
+                title,
+                desc,
+                priority,
+                status,
+                aiNote: '',
+                created: new Date().toISOString()
+            };
+            
+            tasks.push(task);
+            saveTasks();
+            hideAddForm(status);
+        }
+
+        function openTask(id) {
+            currentTaskId = id;
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+            
+            document.getElementById('modalTitle').textContent = task.title;
+            document.getElementById('modalDesc').textContent = task.desc || 'אין תיאור';
+            document.getElementById('aiNote').value = task.aiNote || '';
+            
+            const statusNames = {
+                'todo': 'לעשות',
+                'in-progress': 'בביצוע',
+                'blocked': 'צריך עזרה',
+                'done': 'הושלמו'
+            };
+            document.getElementById('modalStatus').textContent = `ברשימה: ${statusNames[task.status]}`;
+            
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            currentTaskId = null;
+        }
+
+        function saveAiNote() {
+            if (!currentTaskId) return;
+            const task = tasks.find(t => t.id === currentTaskId);
+            if (task) {
+                task.aiNote = document.getElementById('aiNote').value;
+                saveTasks();
+                alert('ההערה נשמרה! ✓');
+            }
+        }
+
+        function moveTask(status) {
+            if (!currentTaskId) return;
+            const task = tasks.find(t => t.id === currentTaskId);
+            if (task) {
+                task.status = status;
+                saveTasks();
+                closeModal();
+            }
+        }
+
+        function deleteTask() {
+            if (!currentTaskId) return;
+            if (confirm('למחוק את המשימה?')) {
+                tasks = tasks.filter(t => t.id !== currentTaskId);
+                saveTasks();
+                closeModal();
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('taskModal').addEventListener('click', (e) => {
+            if (e.target.id === 'taskModal') closeModal();
+        });
+
+        // Initial render
+        renderBoard();
+
+        // Auto-refresh every 30 seconds
+        setInterval(renderBoard, 30000);
+    </script>
+</body>
+</html>
